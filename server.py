@@ -1,5 +1,6 @@
 import threading
 import socket
+import sockettools
 
 host = '127.0.0.1'  # localhost, can be changed to public IP Address to make it viable through internet
 port = 55555
@@ -21,7 +22,12 @@ nicknames = []
 # BROADCAST FUNCTION, sends message to all clients that are connected to the server
 def broadcast(message):
     for client in clients:
-        client.send(message) # getting all the clients and sending a particular message
+        if message.decode('UTF-8') == 'Client disconnected':
+            pass
+        else:
+            client.send(message) # getting all the clients and sending a particular message
+        
+        
 
 # handle the client connection, when a client connect we want to receive messages from the client
 # and send back messages to all the other clients
@@ -32,6 +38,7 @@ def handle(client):
         try:
             message = client.recv(1024) # 1024 bytes # as long as it works, that we receive message from the client, are broadcasting it to all the other clients
             broadcast(message)
+            print(message)
         except: # will give error when the client is not there anymore/has disconnected
             # cut the connection, remove it from the list and terminate this loop
             index = clients.index(client) # getting the index of the client from the list
@@ -42,6 +49,20 @@ def handle(client):
             broadcast(f'{nickname} left the chat!'.encode('UTF-8')) # could also be ascii
             nicknames.remove(nickname)
             break
+        
+        if message.decode('UTF-8') == 'Client disconnected':
+            index = clients.index(client) # getting the index of the client from the list
+            clients.remove(client)
+            print(f'Client that disconnected: {client}')
+            client.close()
+            nickname = nicknames[index] # when we remove the client we also remove the nickname from that index
+            # broadcast that the client has left
+            print(f'Nickname of client that disconnected: {nickname}')
+            broadcast(f'{nickname} left the chat!'.encode('UTF-8')) # could also be ascii
+            nicknames.remove(nickname)
+            break
+        
+
 
 
 #main method/receive method

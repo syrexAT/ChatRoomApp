@@ -1,11 +1,14 @@
 import socket
 import threading
+import sockettools
 
 nickname = input("Choose a nickname: ")
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # instead of binding the socket to host and port, we are connecting it
 client.connect(('127.0.0.1', 55555))
+
+DisconnectMessage = 'Client disconnected'
 
 # define 2 methods
 # run 2 threads at the same time
@@ -23,7 +26,7 @@ def receive():
             else:
                 print(message)
         except:
-            print("An error occurred!")
+            print("Disconnected!")
             client.close()
             break
 
@@ -32,8 +35,17 @@ def write():
         # constantly running new input functions, as sooon as the user presses enter we are asking for the next one
         # the only option that the user has is to close the client or write new messages
         # receive and write will run a the same time
-        message = f'{nickname}: {input("")}'
-        client.send(message.encode('UTF-8'))
+        text = input("")
+        message = f'{nickname}: {text}'
+        if text == 'quit':
+            client.send(DisconnectMessage.encode('UTF-8'))
+            print('You disconnected from the server!')
+            client.close()
+            break
+        else:
+            client.send(message.encode('UTF-8'))
+
+
 
 # run receive thread and write thread
 receive_thread = threading.Thread(target=receive)
